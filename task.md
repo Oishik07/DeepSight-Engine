@@ -1,0 +1,29 @@
+# Deep Research Agent V1 Tasks
+
+- `[x]` **1. Initialize Project & Dependencies**
+  - Create project folder structure
+  - Define `requirements.txt`
+  - Setup virtual environment (or global if preferred)
+- `[x]` **2. Setup Database Layer**
+  - Configure PostgreSQL connection
+  - Define `ResearchJob` SQLAlchemy model
+  - Create database session management
+- `[x]` **3. Define Schemas & Graph State**
+  - Pydantic models for API payloads (including API keys)
+  - LangGraph state definition (`State` TypedDict or Pydantic)
+- `[x]` **4. Implement LangGraph Workflow**
+  - `Planner Agent`: Generate research plan
+  - `Research Agent`: Execute web searches (Tavily)
+  - `Report Agent`: Generate final structured report
+  - Compile the LangGraph
+- `[x]` **5. Implement FastAPI Endpoints**
+  - `POST /api/research`: Kick off job
+  - `GET /api/research/{job_id}`: Job status
+  - `GET /api/research/{job_id}/stream`: SSE endpoint
+- `[x]` **6. Build Frontend UI**
+  - Premium, modern, dark-themed vanilla CSS frontend
+  - API key inputs for LLM and Search
+  - Real-time SSE UI updates
+  - Markdown rendering for final report
+- `[/]` **7. Final Testing & Verification**
+  - Ensure all components work together seamlessly

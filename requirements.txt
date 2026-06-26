@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+langchain>=0.1.0
+langgraph>=0.0.20
+langchain-openai>=0.0.5
+langchain-community
+tavily-python>=0.3.0
+sqlalchemy[asyncio]
+aiosqlite
+asyncpg
+pydantic
+pydantic-settings
+sse-starlette
+python-dotenv

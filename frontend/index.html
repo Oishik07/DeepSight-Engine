@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepsight Engine</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="light-mode">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    New Research
+                </button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- History items will be injected here -->
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-workspace">
+            <!-- Top Configuration Bar -->
+            <header class="top-nav">
+                <div class="logo">
+                    <h2>Deepsight Engine</h2>
+                </div>
+                <div class="config-flex">
+                    <div class="config-item">
+                        <select id="llmProvider">
+                            <option value="openrouter">OpenRouter</option>
+                            <option value="groq">Groq</option>
+                            <option value="openai">OpenAI</option>
+                        </select>
+                    </div>
+                    <div class="config-item">
+                        <input type="text" id="llmModel" value="llama-3.1-8b-instant" placeholder="Model">
+                    </div>
+                    <div class="config-item">
+                        <input type="password" id="llmKey" placeholder="LLM API Key (sk-...)">
+                    </div>
+                    <div class="config-item">
+                        <input type="password" id="searchKey" placeholder="Tavily Key (tvly-...)">
+                    </div>
+                    <div class="config-item">
+                        <button id="toggleSystemPromptBtn" class="icon-btn" title="System Context">⚙️</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Hidden System Prompt Panel -->
+            <div id="systemPromptPanel" class="system-prompt-panel hidden">
+                <label>Custom System Prompt / Context</label>
+                <textarea id="systemPrompt" rows="3" placeholder="e.g. Act as a strict mutual fund compliance officer..."></textarea>
+            </div>
+
+            <!-- Chat / Content Area -->
+            <div class="chat-container" id="chatContainer">
+                <div class="welcome-screen" id="welcomeScreen">
+                    <h1>What do you want to research?</h1>
+                    <p>Powered by advanced multi-agent reflection and concurrent deep search.</p>
+                </div>
+
+                <!-- Live Progress Timeline / Logs -->
+                <div class="progress-timeline" id="progressTimeline" style="display: none;">
+                    <div class="timeline-header">
+                        <h3>Agent Activity</h3>
+                        <span id="statusBadge" class="status-badge">Processing</span>
+                    </div>
+                    <div id="logConsole" class="log-console"></div>
+                </div>
+
+                <!-- Final Report -->
+                <div class="report-section" id="reportSection" style="display: none;">
+                    <div class="report-header">
+                        <h2>Research Output</h2>
+                        <a id="downloadBtn" class="download-btn hidden" download>📥 Download Markdown</a>
+                    </div>
+                    <div id="reportContent" class="markdown-body"></div>
+                </div>
+                
+                <div class="chat-spacer"></div>
+            </div>
+
+            <!-- Bottom Input Bar -->
+            <div class="bottom-input-bar">
+                <div class="input-wrapper">
+                    <textarea id="goalInput" rows="1" placeholder="Ask anything... e.g. Deep dive into quantum computing recent breakthroughs" autofocus></textarea>
+                    <button id="startBtn" class="send-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
