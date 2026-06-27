@@ -35,4 +35,5 @@ class ResearchJob(Base):
     goal = Column(String, nullable=False)
     status = Column(String, default="PENDING")  # PENDING, IN_PROGRESS, COMPLETED, FAILED
     final_report = Column(JSONType, nullable=True)
+    user_email = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

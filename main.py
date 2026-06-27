@@ -6,11 +6,19 @@ from database.session import engine, Base
 from api.endpoints import router as api_router
 from contextlib import asynccontextmanager
 
+from sqlalchemy import text
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup: Create tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Attempt to run automated migration to add user_email column for SQLite
+        try:
+            await conn.execute(text("ALTER TABLE research_jobs ADD COLUMN user_email VARCHAR"))
+        except Exception:
+            # Column already exists
+            pass
     yield
     # Shutdown
     await engine.dispose()

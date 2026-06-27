@@ -17,7 +17,7 @@ def final_stage_char_budget(provider: str, model: str) -> int:
 
     if provider == "groq":
         if "8b" in model or "instant" in model:
-            return 4500
-        return 6500
+            return 5000
+        return 15000
 
-    return 10000
+    return 30000

@@ -34,6 +34,10 @@ class AgentState(TypedDict):
     findings: Annotated[List[Dict[str, Any]], operator.add]
     final_report: Optional[Dict[str, Any]]
     
+    # Sectional report generation fields
+    report_outline: Optional[Dict[str, Any]]
+    report_sections: Optional[Dict[str, str]]
+    
     # Critic and Reflection fields
     critic_feedback: Optional[str]
     critic_decision: Optional[str]

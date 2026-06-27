@@ -16,7 +16,7 @@ async def plan_research(state: AgentState):
         ("system", f"You are an Elite Research Mastermind. Your objective is to architect a flawless, extremely rigorous research plan for the user's goal.\n"
                    f"User's Custom System Context: '{system_prompt}'\n\n"
                    "INSTRUCTIONS:\n"
-                   "1. Break the goal down into 4-6 highly specific, mutually exclusive research tasks.\n"
+                   "1. Break the goal down into 4-5 highly specific, mutually exclusive research tasks.\n"
                    "2. Ensure the tasks collectively cover all possible angles: historical context, recent breakthroughs, step-by-step technical guides, competitive landscape, and factual data.\n"
                    "3. Your tasks will be executed by parallel web-search agents, so make them concrete and search-engine friendly.\n"
                    "Ensure your tasks align perfectly with the user's custom context.\n"

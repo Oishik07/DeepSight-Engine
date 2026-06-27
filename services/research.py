@@ -3,6 +3,7 @@ import traceback
 from database.models import ResearchJob
 from database.session import AsyncSessionLocal
 from graph.workflow import compile_workflow
+from core.config import settings
 
 # -------------------------------------------------------------------
 # In-memory pub/sub with replay buffer (solves the race condition
@@ -41,6 +42,55 @@ def unsubscribe(job_id: str, q: asyncio.Queue):
 
 import os
 import json
+import re
+from agents.report_postprocess import normalize_report_markdown
+
+PROVIDER_API_KEY_ENV_VARS = {
+    "groq": ("GROQ_API_KEY",),
+    "openai": ("OPENAI_API_KEY",),
+    "openrouter": ("OPENROUTER_API_KEY",),
+    "claude": ("ANTHROPIC_API_KEY",),
+    "anthropic": ("ANTHROPIC_API_KEY",),
+    "gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+}
+
+
+def _env_value(name: str) -> str:
+    value = getattr(settings, name, None) or os.environ.get(name, "")
+    return value.strip()
+
+
+def _resolve_llm_api_key(provider: str, request_api_key: str | None) -> str:
+    request_api_key = (request_api_key or "").strip()
+    if request_api_key:
+        return request_api_key
+
+    env_names = PROVIDER_API_KEY_ENV_VARS.get(provider, ("OPENAI_API_KEY",))
+    for env_name in env_names:
+        value = _env_value(env_name)
+        if value:
+            return value
+
+    expected = " or ".join(env_names)
+    raise ValueError(
+        f"LLM API key is missing. Set {expected} in your environment/.env file "
+        "or provide a key in the Configuration panel."
+    )
+
+
+def _resolve_search_api_key(request_api_key: str | None) -> str:
+    request_api_key = (request_api_key or "").strip()
+    if request_api_key:
+        return request_api_key
+
+    value = _env_value("TAVILY_API_KEY")
+    if value:
+        return value
+
+    raise ValueError(
+        "Search API key is missing. Set TAVILY_API_KEY in your environment/.env file "
+        "or provide a key in the Configuration panel."
+    )
 
 async def run_research_background(
     job_id: str,
@@ -63,17 +113,24 @@ async def run_research_background(
 
         app = compile_workflow()
 
+        provider = (llm_provider or "").strip().lower() or "groq"
+        model = (llm_model or "").strip() or "llama-3.1-8b-instant"
+        resolved_llm_api_key = _resolve_llm_api_key(provider, llm_api_key)
+        resolved_search_api_key = _resolve_search_api_key(search_api_key)
+
         initial_state = {
             "job_id": job_id,
             "research_goal": goal,
             "system_prompt": system_prompt,
-            "llm_provider": llm_provider,
-            "llm_model": llm_model,
-            "llm_api_key": llm_api_key.strip() if llm_api_key else "",
-            "search_api_key": search_api_key.strip() if search_api_key else "",
+            "llm_provider": provider,
+            "llm_model": model,
+            "llm_api_key": resolved_llm_api_key,
+            "search_api_key": resolved_search_api_key,
             "current_task_index": 0,
             "findings": [],
             "revision_count": 0,
+            "report_outline": None,
+            "report_sections": None,
         }
 
         latest_report = None
@@ -128,6 +185,14 @@ async def run_research_background(
                 })
 
         report = latest_report
+        if report and report.get("report_markdown"):
+            cleaned_markdown, cleaned_sources = normalize_report_markdown(
+                report.get("report_markdown", ""),
+                report.get("sources_used", []),
+            )
+            report = dict(report)
+            report["report_markdown"] = cleaned_markdown
+            report["sources_used"] = cleaned_sources
         
         # Save report to File System
         file_path = f"results/{job_id}.md"
@@ -135,12 +200,14 @@ async def run_research_background(
             os.makedirs("results", exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 title = report.get('title', 'Research Report')
-                f.write(f"# {title}\n\n")
-
                 report_markdown = report.get('report_markdown')
                 if report_markdown:
-                    f.write(f"{report_markdown.strip()}\n\n")
+                    saved_markdown = report_markdown.strip()
+                    if not re.match(r"^\s*#\s+", saved_markdown):
+                        saved_markdown = f"# {title}\n\n{saved_markdown}"
+                    f.write(f"{saved_markdown}\n\n")
                 else:
+                    f.write(f"# {title}\n\n")
                     if report.get('introduction'):
                         f.write(f"{report.get('introduction')}\n\n")
                     for section in report.get('sections', []):
@@ -152,7 +219,7 @@ async def run_research_background(
                     if report.get('conclusion'):
                         f.write(f"## Conclusion\n\n{report.get('conclusion')}\n\n")
 
-                if report.get('sources_used'):
+                if not report_markdown and report.get('sources_used'):
                     f.write(f"### Sources\n\n")
                     for s in report.get('sources_used'):
                         f.write(f"- {s}\n")
