@@ -12,3 +12,5 @@ pydantic
 pydantic-settings
 sse-starlette
 python-dotenv
+google-auth
+requests
