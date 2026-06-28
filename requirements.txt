@@ -14,3 +14,7 @@ sse-starlette
 python-dotenv
 google-auth
 requests
+langchain-groq
+langchain-google-genai
+langchain-anthropic
+
