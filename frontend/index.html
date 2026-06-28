@@ -3,44 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deepsight Engine</title>
+    <title>Deep Research Agent</title>
+    <link rel="icon" type="image/x-icon" href="/static/logo.jfif">
+    <link rel="shortcut icon" type="image/x-icon" href="/static/logo.jfif">
     <link rel="stylesheet" href="/static/styles.css?v=2.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <!-- Google Identity Services client library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="light-mode">
-    <!-- Auth Container (Signed Out Screen) -->
-    <div id="authContainer" class="auth-container">
-        <div class="auth-card">
-            <div class="auth-logo">Deepsight Engine</div>
-            <p class="auth-subtitle">Deep research, powered by Agentic AI ⭐</p>
-            <div id="googleSignInWrapper">
-                <div id="googleSignInBtn"></div>
-            </div>
-            <div class="auth-divider">
-                <span>or</span>
-            </div>
-            <button id="demoSignInBtn" class="demo-signin-btn">Demo Sign-In</button>
-            <div id="authWarning" class="auth-warning hidden">
-                Google Client ID is not configured. Google Sign-In is disabled, please use Demo Sign-In.
-            </div>
-        </div>
-    </div>
-
-    <!-- App Container (Signed In Workspace) -->
-    <div class="app-container" id="appContainer" style="display: none;">
+    <!-- App Container (Workspace) -->
+    <div class="app-container" id="appContainer">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <!-- User Profile Section -->
-                <div class="user-profile">
-                    <span id="userEmail" class="user-email">user@deepsight.ai</span>
-                    <button id="signOutBtn" class="sign-out-btn" title="Sign Out">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-                    </button>
-                </div>
                 <button class="new-chat-btn" id="newChatBtn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                     New Research
@@ -61,7 +36,10 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
                     </button>
                     <div class="logo">
-                        <h2>Deepsight Engine</h2>
+                        <h2>
+                            <img src="/static/logo.jfif" class="app-logo-img" alt="DRA Logo">
+                            <span class="logo-text">Deep Research Agent</span>
+                        </h2>
                     </div>
                 </div>
                 <div>

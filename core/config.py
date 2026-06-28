@@ -1,5 +1,10 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from typing import Optional
+
+# Resolve the project root dynamically to guarantee the .env file is found
+ROOT_DIR = Path(__file__).resolve().parent.parent
+ENV_FILE = ROOT_DIR / ".env"
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Deep Research Agent"
@@ -15,6 +20,6 @@ class Settings(BaseSettings):
     TAVILY_API_KEY: Optional[str] = None
 
     class Config:
-        env_file = ".env"
+        env_file = str(ENV_FILE)
 
 settings = Settings()

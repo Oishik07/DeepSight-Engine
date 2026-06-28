@@ -66,13 +66,20 @@ body.light-mode {
 }
 
 .auth-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.auth-logo-text {
     font-size: 2rem;
     font-weight: 800;
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -1px;
-    margin-bottom: 0.5rem;
 }
 
 .auth-subtitle {
@@ -315,6 +322,12 @@ body.light-mode {
 }
 
 .logo h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.logo-text {
     font-size: 1.25rem;
     font-weight: 700;
     background: var(--accent-gradient);
@@ -1054,4 +1067,32 @@ body.light-mode {
 * {
     scrollbar-width: thin;
     scrollbar-color: rgba(99, 102, 241, 0.28) rgba(15, 15, 18, 0.4);
+}
+
+.no-history-placeholder {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    margin: 0.5rem;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.app-logo-img {
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+}
+
+.auth-logo .app-logo-img {
+    height: 40px;
+    width: 40px;
+    border-radius: 10px;
+}
+
+.logo h2 .app-logo-img {
+    height: 28px;
+    width: 28px;
+    border-radius: 6px;
 }

@@ -1,11 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Auth & Navigation Elements
-    const authContainer = document.getElementById('authContainer');
+    // Navigation Elements
     const appContainer = document.getElementById('appContainer');
-    const userEmailSpan = document.getElementById('userEmail');
-    const signOutBtn = document.getElementById('signOutBtn');
-    const demoSignInBtn = document.getElementById('demoSignInBtn');
-    const authWarning = document.getElementById('authWarning');
     
     // Mobile Responsive Navigation Elements
     const sidebar = document.getElementById('sidebar');
@@ -51,8 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentJobId = null;
     let cachedGoal = "";
     let googleClientId = null;
-    let userToken = localStorage.getItem('deepsight_user_token');
-    let userEmail = localStorage.getItem('deepsight_user_email');
+    let userToken = "mock:user@deepsight.ai";
+    let userEmail = "user@deepsight.ai";
 
     // Speech Synthesis states
     let synth = window.speechSynthesis;
@@ -182,114 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ----------------------------------------------------
-    // AUTHENTICATION LOGIC (Google & Demo Fallback)
-    // ----------------------------------------------------
-
-    // Initialize Auth state
-    initAuth();
-
-    async function initAuth() {
-        try {
-            const configRes = await fetch('/api/config');
-            if (configRes.ok) {
-                const configData = await configRes.json();
-                googleClientId = configData.google_client_id;
-            }
-        } catch (err) {
-            console.error("Failed to fetch App Configuration", err);
-        }
-
-        if (userToken && userEmail) {
-            // Already signed in
-            showAppWorkspace(userEmail);
-        } else {
-            // Signed out, show landing sign-in page
-            showAuthScreen();
-        }
-    }
-
-    function showAuthScreen() {
-        authContainer.style.display = 'flex';
-        appContainer.style.display = 'none';
-
-        if (googleClientId) {
-            authWarning.classList.add('hidden');
-            // Load Google Sign-In SDK
-            if (window.google) {
-                google.accounts.id.initialize({
-                    client_id: googleClientId,
-                    callback: handleGoogleCredentialResponse
-                });
-                google.accounts.id.renderButton(
-                    document.getElementById("googleSignInBtn"),
-                    { theme: "outline", size: "large", width: 250 }
-                );
-            }
-        } else {
-            // No client ID, show developer warning info
-            authWarning.classList.remove('hidden');
-        }
-    }
-
-    function showAppWorkspace(email) {
-        authContainer.style.display = 'none';
-        appContainer.style.display = 'flex';
-        userEmailSpan.textContent = email;
-        fetchHistory();
-    }
-
-    // Google Sign-In callback
-    function handleGoogleCredentialResponse(response) {
-        // credential is the JWT payload returned by Google
-        const token = response.credential;
-        // Parse email from JWT payload roughly to show in user profile
-        try {
-            const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            const payload = JSON.parse(jsonPayload);
-            
-            localStorage.setItem('deepsight_user_token', token);
-            localStorage.setItem('deepsight_user_email', payload.email);
-            userToken = token;
-            userEmail = payload.email;
-
-            showAppWorkspace(payload.email);
-        } catch (e) {
-            console.error("Failed to parse Google JWT", e);
-        }
-    }
-
-    // Demo Sign-in fallback
-    demoSignInBtn.addEventListener('click', () => {
-        const demoEmail = "demo@deepsight.ai";
-        const demoToken = "mock:demo@deepsight.ai";
-        localStorage.setItem('deepsight_user_token', demoToken);
-        localStorage.setItem('deepsight_user_email', demoEmail);
-        userToken = demoToken;
-        userEmail = demoEmail;
-        showAppWorkspace(demoEmail);
-    });
-
-    // Sign Out
-    signOutBtn.addEventListener('click', () => {
-        if (isSpeaking) {
-            synth.cancel();
-        }
-        localStorage.removeItem('deepsight_user_token');
-        localStorage.removeItem('deepsight_user_email');
-        userToken = null;
-        userEmail = null;
-        currentJobId = null;
-        welcomeScreen.style.display = 'block';
-        progressTimeline.style.display = 'none';
-        reportSection.style.display = 'none';
-        logConsole.innerHTML = '';
-        goalInput.value = '';
-        showAuthScreen();
-    });
+    // Initialize application immediately
+    fetchHistory();
 
     // Helper to inject Auth Header to all API requests
     function getAuthHeaders() {
@@ -308,19 +197,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await fetch('/api/research', {
                 headers: getAuthHeaders()
             });
-            if (!res.ok) {
-                if (res.status === 401) signOutBtn.click();
-                return;
-            }
+            if (!res.ok) return;
             const jobs = await res.json();
             historyList.innerHTML = '';
-            jobs.forEach(job => {
-                const btn = document.createElement('button');
-                btn.className = 'history-item';
-                btn.innerHTML = `<span class="goal-text">${job.goal}</span> <span class="date">${new Date(job.created_at).toLocaleDateString()}</span>`;
-                btn.onclick = () => loadJob(job.id, btn);
-                historyList.appendChild(btn);
-            });
+
+            let sessionIds = [];
+            try {
+                sessionIds = JSON.parse(sessionStorage.getItem('sessionResearchIds')) || [];
+            } catch (e) {
+                sessionIds = [];
+            }
+
+            const sessionJobs = jobs.filter(job => sessionIds.includes(job.id));
+
+            if (sessionJobs.length === 0) {
+                const placeholder = document.createElement('div');
+                placeholder.className = 'no-history-placeholder';
+                placeholder.textContent = 'No history of research yet';
+                historyList.appendChild(placeholder);
+            } else {
+                sessionJobs.forEach(job => {
+                    const btn = document.createElement('button');
+                    btn.className = 'history-item';
+                    btn.innerHTML = `<span class="goal-text">${job.goal}</span> <span class="date">${new Date(job.created_at).toLocaleDateString()}</span>`;
+                    btn.onclick = () => loadJob(job.id, btn);
+                    historyList.appendChild(btn);
+                });
+            }
         } catch (e) {
             console.error("Failed to load history", e);
         }
@@ -434,6 +337,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
             currentJobId = data.id;
+            
+            let sessionIds = [];
+            try {
+                sessionIds = JSON.parse(sessionStorage.getItem('sessionResearchIds')) || [];
+            } catch (e) {
+                sessionIds = [];
+            }
+            if (!sessionIds.includes(data.id)) {
+                sessionIds.push(data.id);
+                sessionStorage.setItem('sessionResearchIds', JSON.stringify(sessionIds));
+            }
             
             fetchHistory(); // Refresh sidebar history
             connectSSE(data.id);
