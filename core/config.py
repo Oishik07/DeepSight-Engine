@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     # If the user sets postgres: postgresql+asyncpg://user:pass@localhost:5432/db
     GOOGLE_CLIENT_ID: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
+    GROQ_API_KEYS: Optional[str] = None
+    GROQ_API_KEY_1: Optional[str] = None
+    GROQ_API_KEY_2: Optional[str] = None
+    GROQ_API_KEY_3: Optional[str] = None
+    GROQ_DAILY_TOKEN_LIMIT_PER_KEY: int = 500000
     OPENAI_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None

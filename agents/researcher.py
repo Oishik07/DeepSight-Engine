@@ -7,6 +7,7 @@ import os
 
 from pydantic import BaseModel, Field
 import asyncio
+import random
 
 class SubQueries(BaseModel):
     queries: list[str] = Field(description="Exactly 3 specific, distinct search queries to retrieve comprehensive information for the task.")

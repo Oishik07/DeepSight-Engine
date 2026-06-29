@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const toggleSettingsBtn = document.getElementById('toggleSettingsBtn');
     const settingsDropdownPanel = document.getElementById('settingsDropdownPanel');
+    const usageStatusBtn = document.getElementById('usageStatusBtn');
+    const usageStatusPanel = document.getElementById('usageStatusPanel');
+    const usageStatusDot = document.getElementById('usageStatusDot');
+    const usageLlmProvider = document.getElementById('usageLlmProvider');
+    const usageCapacity = document.getElementById('usageCapacity');
+    const usageSearchProvider = document.getElementById('usageSearchProvider');
+    const usageWaitTime = document.getElementById('usageWaitTime');
+    const usageAdvisory = document.getElementById('usageAdvisory');
     const toggleSystemPromptBtn = document.getElementById('toggleSystemPromptBtn');
     const systemPromptPanel = document.getElementById('systemPromptPanel');
     const systemPromptInput = document.getElementById('systemPrompt');
@@ -33,13 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
     // Toggle Settings Dropdown Panel
     toggleSettingsBtn.addEventListener('click', () => {
         settingsDropdownPanel.classList.toggle('hidden');
+        if (usageStatusPanel) usageStatusPanel.classList.add('hidden');
     });
+
+    if (usageStatusBtn && usageStatusPanel) {
+        usageStatusBtn.addEventListener('click', async () => {
+            settingsDropdownPanel.classList.add('hidden');
+            usageStatusPanel.classList.toggle('hidden');
+            if (!usageStatusPanel.classList.contains('hidden')) {
+                await refreshUsageStatus();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (!usageStatusPanel.contains(event.target) && !usageStatusBtn.contains(event.target)) {
+                usageStatusPanel.classList.add('hidden');
+            }
+        });
+    }
 
     // Toolbar Action Buttons
     const copyBtn = document.getElementById('copyBtn');
     const likeBtn = document.getElementById('likeBtn');
     const unlikeBtn = document.getElementById('unlikeBtn');
     const readerBtn = document.getElementById('readerBtn');
+    const pdfExportBtn = document.getElementById('pdfExportBtn');
+    const docxExportBtn = document.getElementById('docxExportBtn');
     const regenerateBtn = document.getElementById('regenerateBtn');
     const speakBtn = document.getElementById('speakBtn');
 
@@ -225,6 +252,41 @@ document.addEventListener('DOMContentLoaded', () => {
             'Authorization': `Bearer ${userToken}`
         };
     }
+
+    async function refreshUsageStatus() {
+        if (!usageStatusPanel) return;
+
+        usageLlmProvider.textContent = 'Checking...';
+        usageCapacity.textContent = 'Checking...';
+        usageSearchProvider.textContent = 'Checking...';
+        usageWaitTime.textContent = 'Checking...';
+        usageAdvisory.textContent = '';
+
+        try {
+            const res = await fetch('/api/status/ai');
+            if (!res.ok) throw new Error('Status unavailable');
+            const status = await res.json();
+            const severity = status.severity || 'green';
+
+            usageStatusDot.className = `usage-status-dot ${severity}`;
+            usageStatusBtn.dataset.severity = severity;
+            usageLlmProvider.textContent = status.llm_provider || 'Unknown';
+            usageCapacity.textContent = status.daily_ai_capacity_label || 'Unknown';
+            usageSearchProvider.textContent = status.search_provider || 'Unknown';
+            usageWaitTime.textContent = status.average_wait_time || '<1 min';
+            usageAdvisory.textContent = status.advisory || '';
+        } catch (error) {
+            usageStatusDot.className = 'usage-status-dot red';
+            usageStatusBtn.dataset.severity = 'red';
+            usageLlmProvider.textContent = 'Needs attention';
+            usageCapacity.textContent = 'Unavailable';
+            usageSearchProvider.textContent = 'Checking failed';
+            usageWaitTime.textContent = 'temporarily delayed';
+            usageAdvisory.textContent = 'Status could not be loaded. Please retry in a moment.';
+        }
+    }
+
+    refreshUsageStatus();
 
     // ----------------------------------------------------
     // SIDEBAR NAVIGATION & HISTORY
@@ -692,10 +754,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     statusBadge.className = 'status-badge success';
                     stopProgressDashboard(true);
                     if (data.report) displayReport(data.report, jobId);
+                    refreshUsageStatus();
                 } else {
                     statusBadge.textContent = 'Failed';
                     statusBadge.className = 'status-badge error';
                     stopProgressDashboard(false);
+                    refreshUsageStatus();
                     if (cachedGoal && goalInput.value === '') {
                         goalInput.value = cachedGoal;
                         goalInput.style.height = (goalInput.scrollHeight) + 'px';
@@ -711,6 +775,8 @@ document.addEventListener('DOMContentLoaded', () => {
             stopProgressDashboard(false);
             const loader = document.getElementById('active-loader');
             if (loader) loader.remove();
+            appendAgentCard('error', 'The live connection was interrupted. Please reopen this research item or try again in a moment.');
+            refreshUsageStatus();
         };
     }
 
@@ -865,6 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function displayReport(report, jobId) {
         reportSection.style.display = 'block';
+        if (jobId) currentJobId = jobId;
         
         let reportObj = report;
         
@@ -919,6 +986,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // REPORT TOOLBAR CONTROL ACTIONS
     // ----------------------------------------------------
+
+    async function downloadReport(format, button) {
+        if (!currentJobId) return;
+
+        const originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.classList.add('active');
+
+        try {
+            const response = await fetch(`/api/research/${currentJobId}/export/${format}`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            if (!response.ok) {
+                let message = 'Export failed. Please try again.';
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.detail) message = errData.detail;
+                } catch (e) {}
+                throw new Error(message);
+            }
+
+            const blob = await response.blob();
+            const disposition = response.headers.get('Content-Disposition') || '';
+            const filenameMatch = disposition.match(/filename="([^"]+)"/);
+            const filename = filenameMatch ? filenameMatch[1] : `research-report.${format}`;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            appendAgentCard('error', error.message);
+        } finally {
+            button.disabled = false;
+            button.classList.remove('active');
+            button.innerHTML = originalHtml;
+        }
+    }
+
+    if (pdfExportBtn) {
+        pdfExportBtn.addEventListener('click', () => downloadReport('pdf', pdfExportBtn));
+    }
+
+    if (docxExportBtn) {
+        docxExportBtn.addEventListener('click', () => downloadReport('docx', docxExportBtn));
+    }
 
     // Copy Content
     copyBtn.addEventListener('click', async () => {

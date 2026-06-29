@@ -44,9 +44,10 @@ import os
 import json
 import re
 from agents.report_postprocess import normalize_report_markdown
+from agents.llm import humanize_llm_exception
 
 PROVIDER_API_KEY_ENV_VARS = {
-    "groq": ("GROQ_API_KEY",),
+    "groq": ("GROQ_API_KEYS", "GROQ_API_KEY_1", "GROQ_API_KEY_2", "GROQ_API_KEY_3", "GROQ_API_KEY"),
     "openai": ("OPENAI_API_KEY",),
     "openrouter": ("OPENROUTER_API_KEY",),
     "claude": ("ANTHROPIC_API_KEY",),
@@ -60,16 +61,28 @@ def _env_value(name: str) -> str:
     return value.strip()
 
 
+def _split_api_keys(value: str) -> list[str]:
+    return [part.strip() for part in re.split(r"[\s,;]+", value or "") if part.strip()]
+
+
 def _resolve_llm_api_key(provider: str, request_api_key: str | None) -> str:
     request_api_key = (request_api_key or "").strip()
     if request_api_key:
         return request_api_key
 
     env_names = PROVIDER_API_KEY_ENV_VARS.get(provider, ("OPENAI_API_KEY",))
+    keys = []
     for env_name in env_names:
-        value = _env_value(env_name)
-        if value:
-            return value
+        keys.extend(_split_api_keys(_env_value(env_name)))
+
+    if keys:
+        seen = set()
+        deduped = []
+        for key in keys:
+            if key not in seen:
+                seen.add(key)
+                deduped.append(key)
+        return ",".join(deduped)
 
     expected = " or ".join(env_names)
     raise ValueError(
@@ -246,7 +259,7 @@ async def run_research_background(
                 await session.commit()
 
     except Exception as e:
-        err_msg = f"Error: {str(e)}"
+        err_msg = humanize_llm_exception(e)
         print(f"[research background] {err_msg}\n{traceback.format_exc()}")
         await publish_event(job_id, {"status": err_msg, "node": "error"})
         async with AsyncSessionLocal() as session:

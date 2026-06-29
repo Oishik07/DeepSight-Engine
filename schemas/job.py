@@ -5,8 +5,8 @@ from datetime import datetime
 class ResearchRequest(BaseModel):
     goal: str
     system_prompt: Optional[str] = "You are an expert Research Assistant."
-    llm_provider: Optional[str] = "openrouter" # openrouter, groq, openai, etc
-    llm_model: Optional[str] = "qwen/qwen-2.5-72b-instruct"
+    llm_provider: Optional[str] = "groq" # openrouter, groq, openai, etc
+    llm_model: Optional[str] = "llama-3.1-8b-instant"
     llm_api_key: Optional[str] = None
     search_api_key: Optional[str] = None
 
