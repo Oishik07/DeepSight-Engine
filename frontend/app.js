@@ -30,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const usageLlmProvider = document.getElementById('usageLlmProvider');
     const usageCapacity = document.getElementById('usageCapacity');
     const usageSearchProvider = document.getElementById('usageSearchProvider');
-    const usageWaitTime = document.getElementById('usageWaitTime');
     const usageAdvisory = document.getElementById('usageAdvisory');
     const toggleSystemPromptBtn = document.getElementById('toggleSystemPromptBtn');
     const systemPromptPanel = document.getElementById('systemPromptPanel');
@@ -259,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
         usageLlmProvider.textContent = 'Checking...';
         usageCapacity.textContent = 'Checking...';
         usageSearchProvider.textContent = 'Checking...';
-        usageWaitTime.textContent = 'Checking...';
         usageAdvisory.textContent = '';
 
         try {
@@ -273,7 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
             usageLlmProvider.textContent = status.llm_provider || 'Unknown';
             usageCapacity.textContent = status.daily_ai_capacity_label || 'Unknown';
             usageSearchProvider.textContent = status.search_provider || 'Unknown';
-            usageWaitTime.textContent = status.average_wait_time || '<1 min';
             usageAdvisory.textContent = status.advisory || '';
         } catch (error) {
             usageStatusDot.className = 'usage-status-dot red';
@@ -281,7 +278,6 @@ document.addEventListener('DOMContentLoaded', () => {
             usageLlmProvider.textContent = 'Needs attention';
             usageCapacity.textContent = 'Unavailable';
             usageSearchProvider.textContent = 'Checking failed';
-            usageWaitTime.textContent = 'temporarily delayed';
             usageAdvisory.textContent = 'Status could not be loaded. Please retry in a moment.';
         }
     }
@@ -419,22 +415,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const completedStepsCount = document.getElementById('completedStepsCount');
     
     let dashboardTimerInterval = null;
-    let etaSecondsLeft = 510; // default estimated time of 8.5 minutes (8:30)
+    let progressStartedAt = 0;
+    let estimatedTotalSeconds = 510; // default estimated time of 8.5 minutes (8:30)
+    let progressFloorPercent = 0;
+    let lastProgressNode = 'planner';
+    let lastFindingsCount = 0;
 
     function startProgressDashboard() {
         if (progressDashboard) {
             progressDashboard.classList.remove('hidden');
         }
-        etaSecondsLeft = 510;
+        progressStartedAt = Date.now();
+        estimatedTotalSeconds = 510;
+        progressFloorPercent = 4;
+        lastProgressNode = 'planner';
+        lastFindingsCount = 0;
+        if (dashboardTimer) {
+            dashboardTimer.style.background = 'rgba(56, 189, 248, 0.1)';
+            dashboardTimer.style.color = '#38bdf8';
+        }
         updateDashboardTimerDisplay();
         
         if (dashboardTimerInterval) clearInterval(dashboardTimerInterval);
         
         dashboardTimerInterval = setInterval(() => {
-            if (etaSecondsLeft > 5) {
-                etaSecondsLeft--;
-                updateDashboardTimerDisplay();
-            }
+            updateDashboardTimerDisplay();
+            updateTimedProgress();
         }, 1000);
         
         updateDashboardProgress('planner', 0);
@@ -465,9 +471,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateDashboardTimerDisplay() {
         if (!dashboardTimer) return;
-        const mins = String(Math.floor(etaSecondsLeft / 60)).padStart(2, '0');
-        const secs = String(etaSecondsLeft % 60).padStart(2, '0');
+        const elapsed = elapsedProgressSeconds();
+        const secondsLeft = Math.max(5, Math.ceil(estimatedTotalSeconds - elapsed));
+        const mins = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+        const secs = String(secondsLeft % 60).padStart(2, '0');
         dashboardTimer.textContent = `${mins}:${secs}`;
+    }
+
+    function elapsedProgressSeconds() {
+        if (!progressStartedAt) return 0;
+        return Math.max(0, Math.floor((Date.now() - progressStartedAt) / 1000));
+    }
+
+    function updateTimedProgress() {
+        if (!progressDashboard) return;
+        const elapsed = elapsedProgressSeconds();
+        const timedPercent = Math.min(96, (elapsed / Math.max(estimatedTotalSeconds, 1)) * 96);
+        const progressPercent = Math.max(progressFloorPercent, timedPercent);
+
+        if (progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
+        updatePerimeterProgress(progressPercent);
+
+        if (estimatedTotalSeconds - elapsed <= 20 && progressFloorPercent < 96) {
+            estimatedTotalSeconds += 45;
+        }
+    }
+
+    function adjustEstimatedTotal(targetPercent, nodeType) {
+        const elapsed = elapsedProgressSeconds();
+        const targetTotal = Math.ceil(elapsed / Math.max(targetPercent / 100, 0.05));
+        const minimumFutureSeconds = nodeType === 'reporter' || nodeType === 'editor' ? 90 : 120;
+        const maximumFutureSeconds = nodeType === 'critic' ? 120 : 300;
+        const minTotal = elapsed + minimumFutureSeconds;
+        const maxTotal = elapsed + maximumFutureSeconds;
+        const boundedTarget = Math.max(minTotal, Math.min(maxTotal, targetTotal));
+
+        if (boundedTarget > estimatedTotalSeconds) {
+            estimatedTotalSeconds = Math.min(boundedTarget, estimatedTotalSeconds + 60);
+        } else {
+            estimatedTotalSeconds = Math.max(boundedTarget, estimatedTotalSeconds - 30);
+        }
     }
 
     function updatePerimeterProgress(progressPercent) {
@@ -570,41 +613,46 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let stepName = "Planning";
         let stepCountStr = "Step 1 of 9";
-        let progressPercent = 10;
+        let progressPercent = 8;
+        lastProgressNode = nodeType || lastProgressNode;
+        lastFindingsCount = findingsCount || lastFindingsCount;
         
         if (nodeType === 'planner') {
             stepName = "Planning Task Breakdown";
             stepCountStr = "Step 1 of 9";
-            progressPercent = 10;
+            progressPercent = 8;
         } else if (nodeType === 'researcher') {
             const count = findingsCount || 0;
             const stepNum = Math.min(6, 2 + count);
             stepName = `Researching (Query #${count + 1})`;
             stepCountStr = `Step ${stepNum} of 9`;
-            progressPercent = 10 + stepNum * 10;
-            if (etaSecondsLeft > 120) etaSecondsLeft = Math.max(120, etaSecondsLeft - 60);
+            progressPercent = Math.min(70, 18 + count * 10);
         } else if (nodeType === 'critic') {
             stepName = "Evaluating Quality & Score";
             stepCountStr = "Step 7 of 9";
-            progressPercent = 75;
-            etaSecondsLeft = Math.min(60, etaSecondsLeft);
+            progressPercent = 74;
         } else if (nodeType === 'editor' || nodeType === 'reporter') {
             stepName = "Writing & Formatting Report";
             stepCountStr = "Step 8 of 9";
-            progressPercent = 90;
-            etaSecondsLeft = Math.min(30, etaSecondsLeft);
+            progressPercent = 84;
         } else if (nodeType === 'end') {
             stepName = "Finalizing Report";
             stepCountStr = "Step 9 of 9";
             progressPercent = 100;
-            etaSecondsLeft = 0;
         }
         
         if (activeAgentName) activeAgentName.textContent = stepName;
         if (completedStepsCount) completedStepsCount.textContent = stepCountStr;
-        if (progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
-        
-        updatePerimeterProgress(progressPercent);
+        progressFloorPercent = Math.max(progressFloorPercent, progressPercent);
+
+        if (nodeType !== 'end') {
+            adjustEstimatedTotal(progressFloorPercent, nodeType);
+            updateDashboardTimerDisplay();
+            updateTimedProgress();
+        } else {
+            if (progressBarFill) progressBarFill.style.width = `100%`;
+            updatePerimeterProgress(100);
+        }
     }
 
     // ----------------------------------------------------

@@ -68,15 +68,12 @@ async def ai_status():
     severity = "green"
     headline = "DeepSight AI Status"
     advisory = ""
-    average_wait_time = "<1 min"
 
     if not llm_healthy or not search_healthy:
         severity = "red"
-        average_wait_time = "temporarily delayed"
         advisory = "One or more providers need attention before heavy research can run reliably."
     elif remaining_percent <= 10:
         severity = "yellow"
-        average_wait_time = "2-5 min"
         advisory = "Heavy research requests may be delayed."
 
     return {
@@ -86,7 +83,6 @@ async def ai_status():
         "daily_ai_capacity_remaining_percent": remaining_percent,
         "daily_ai_capacity_label": f"{remaining_percent}% Remaining",
         "search_provider": "Healthy" if search_healthy else "Needs attention",
-        "average_wait_time": average_wait_time,
         "advisory": advisory,
         "provider": "Groq",
         "model": model,

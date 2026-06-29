@@ -336,7 +336,7 @@ body.light-mode {
     align-items: center;
     justify-content: center;
     background: rgba(20, 20, 23, 0.8);
-    color: var(--text-muted);
+    color: #9ae6b4;
     border: 1px solid var(--border-color);
     border-radius: 12px;
     cursor: pointer;
@@ -344,9 +344,9 @@ body.light-mode {
 }
 
 .usage-status-btn:hover {
-    color: var(--text-main);
-    border-color: rgba(56, 189, 248, 0.35);
-    background: rgba(255, 255, 255, 0.04);
+    color: #bbf7d0;
+    border-color: rgba(74, 222, 128, 0.35);
+    background: rgba(34, 197, 94, 0.06);
 }
 
 .usage-status-btn::after {
@@ -425,7 +425,7 @@ body.light-mode {
 .usage-status-row {
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 1.25rem;
     padding: 0.55rem 0;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
     font-size: 0.84rem;
@@ -439,6 +439,7 @@ body.light-mode {
     color: var(--text-main);
     font-weight: 650;
     text-align: right;
+    white-space: nowrap;
 }
 
 .usage-advisory {
@@ -837,7 +838,7 @@ body.light-mode {
 .mic-btn {
     background: transparent;
     border: none;
-    color: var(--text-muted);
+    color: #86efac;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -850,10 +851,12 @@ body.light-mode {
     transform: scale(1);
     width: 38px; /* Matched to send button size */
     height: 38px;
+    box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.08), 0 0 18px rgba(34, 197, 94, 0.08);
 }
 .mic-btn:hover {
-    color: var(--accent);
-    background: rgba(255, 255, 255, 0.04);
+    color: #bbf7d0;
+    background: rgba(34, 197, 94, 0.08);
+    box-shadow: 0 0 0 1px rgba(134, 239, 172, 0.18), 0 0 22px rgba(34, 197, 94, 0.18);
 }
 .mic-btn.hidden {
     opacity: 0;
