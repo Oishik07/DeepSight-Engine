@@ -71,7 +71,7 @@ async def ai_status():
 
     if not llm_healthy or not search_healthy:
         severity = "red"
-        advisory = "One or more providers need attention before heavy research can run reliably."
+        advisory = "DeepSight is temporarily unable to process new research requests"
     elif remaining_percent <= 10:
         severity = "yellow"
         advisory = "Heavy research requests may be delayed."

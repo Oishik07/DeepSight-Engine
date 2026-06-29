@@ -97,7 +97,7 @@ async def write_report(state: AgentState):
                        "INSTRUCTIONS:\n"
                        "1. Write the section titled '{section_title}' based on the provided research logs.\n"
                        "2. Focus strictly on the purpose of this section: {section_purpose}\n"
-                       "3. Aim for approximately {target_words} words (must be between 500 and 700 words). Make it detailed, professional, and academic-grade.\n"
+                       "3. Aim for approximately {target_words} words (must be between 500 and 700 words). Make it detailed, professional, and research-grade.\n"
                        "4. Do NOT add any inline numerical citations like [1] or [2] inside the text.\n"
                        "5. Transition smoothly from the previous section. Preceding Section: '{prev_title}' | Preceding Summary: '{prev_summary}'\n"
                        "Do not write the overall report title, references, or outline. Just write the body text for this specific section in Markdown.\n"
