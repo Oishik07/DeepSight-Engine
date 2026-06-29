@@ -374,11 +374,12 @@ body.light-mode {
 }
 
 .system-prompt-panel {
-    background: var(--bg-sidebar);
-    padding: 1.25rem 1.75rem;
-    border-bottom: 1px solid var(--border-color);
+    grid-column: 1 / -1;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
 }
-.system-prompt-panel.hidden { display: none; }
+.system-prompt-panel.hidden { display: none !important; }
 .system-prompt-panel textarea {
     width: 100%;
     border: 1px solid var(--border-color);
