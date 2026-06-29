@@ -84,6 +84,21 @@ async def create_research_job(
     db: AsyncSession = Depends(get_db),
     email: str = Depends(get_current_user_email)
 ):
+    # Safety Check Guardrails
+    sensitive_keywords = [
+        'race', 'sex', 'nudity', 'adult content', 'pornography', 'porn', 
+        'hate speech', 'discrimination', 'discriminate', 'discriminatory', 
+        'explicit content', 'nude', 'sexual'
+    ]
+    import re
+    goal_lower = request.goal.lower()
+    has_sensitive = any(re.search(rf"\b{kw}\b", goal_lower) for kw in sensitive_keywords)
+    if has_sensitive:
+        raise HTTPException(
+            status_code=400,
+            detail="I cannot answer this query due to safety guidelines."
+        )
+
     # Create job in DB
     new_job = ResearchJob(
         goal=request.goal,

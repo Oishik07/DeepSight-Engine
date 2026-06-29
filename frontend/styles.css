@@ -1140,13 +1140,13 @@ body.light-mode {
     position: absolute;
     top: 80px; /* just below top-nav */
     right: 1.75rem;
-    width: 320px;
+    width: 260px;
     background: rgba(20, 20, 23, 0.8);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    padding: 1.25rem;
+    padding: 1rem 1.15rem;
     box-shadow: var(--shadow-lg), 0 0 20px rgba(56, 189, 248, 0.05);
     z-index: 100;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1200,13 +1200,7 @@ body.light-mode {
 }
 
 .progress-bar-container {
-    width: 100%;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 3px;
-    overflow: hidden;
-    margin-bottom: 0.65rem;
-    border: 1px solid rgba(255, 255, 255, 0.02);
+    display: none;
 }
 
 .progress-bar-fill {
@@ -1222,6 +1216,7 @@ body.light-mode {
     justify-content: space-between;
     font-size: 0.75rem;
     color: var(--text-muted);
+    margin-top: 0.55rem;
 }
 
 @keyframes slideInRight {

@@ -102,7 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
-            goalInput.value = transcript;
+            const words = transcript.trim().split(/\s+/).filter(w => w.length > 0);
+            if (words.length > 200) {
+                showWarningPopup("Please limit your search query to a maximum of 200 words.");
+                goalInput.value = words.slice(0, 200).join(" ");
+            } else {
+                goalInput.value = transcript;
+            }
             goalInput.dispatchEvent(new Event('input'));
         };
 
@@ -171,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
         if (words.length > 200) {
-            showWarningPopup("Please limit your search query to a maximum of 200 words. Piling in long essays can hit context window limits.");
+            showWarningPopup("Please limit your search query to a maximum of 200 words.");
             this.value = words.slice(0, 200).join(" ");
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
@@ -351,13 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const completedStepsCount = document.getElementById('completedStepsCount');
     
     let dashboardTimerInterval = null;
-    let etaSecondsLeft = 150; // default estimated time of 2.5 minutes
+    let etaSecondsLeft = 510; // default estimated time of 8.5 minutes (8:30)
 
     function startProgressDashboard() {
         if (progressDashboard) {
             progressDashboard.classList.remove('hidden');
         }
-        etaSecondsLeft = 150;
+        etaSecondsLeft = 510;
         updateDashboardTimerDisplay();
         
         if (dashboardTimerInterval) clearInterval(dashboardTimerInterval);
@@ -386,6 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dashboardTimer.style.background = 'rgba(16, 185, 129, 0.1)';
                 dashboardTimer.style.color = '#10b981';
             }
+            updatePerimeterProgress(100);
             setTimeout(() => {
                 if (progressDashboard) progressDashboard.classList.add('hidden');
             }, 3000);
@@ -399,6 +406,101 @@ document.addEventListener('DOMContentLoaded', () => {
         const mins = String(Math.floor(etaSecondsLeft / 60)).padStart(2, '0');
         const secs = String(etaSecondsLeft % 60).padStart(2, '0');
         dashboardTimer.textContent = `${mins}:${secs}`;
+    }
+
+    function updatePerimeterProgress(progressPercent) {
+        const card = document.getElementById('progressDashboard');
+        if (!card) return;
+        
+        card.dataset.progressPercent = progressPercent;
+        
+        const rect = card.getBoundingClientRect();
+        const W = rect.width;
+        const H = rect.height;
+        if (W === 0 || H === 0) return;
+        
+        const R = 16;
+        const inset = 1.5;
+        
+        let svg = document.getElementById('progressPerimeterSvg');
+        if (!svg) {
+            svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('id', 'progressPerimeterSvg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.overflow = 'visible';
+            svg.style.borderRadius = '16px';
+            
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+            grad.setAttribute('id', 'perimeterGrad');
+            grad.setAttribute('x1', '0%');
+            grad.setAttribute('y1', '0%');
+            grad.setAttribute('x2', '100%');
+            grad.setAttribute('y2', '100%');
+            
+            const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop1.setAttribute('offset', '0%');
+            stop1.setAttribute('stop-color', '#38bdf8');
+            
+            const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+            stop2.setAttribute('offset', '100%');
+            stop2.setAttribute('stop-color', '#a78bfa');
+            
+            grad.appendChild(stop1);
+            grad.appendChild(stop2);
+            defs.appendChild(grad);
+            svg.appendChild(defs);
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('id', 'progressPerimeterPath');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'url(#perimeterGrad)');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('stroke-linecap', 'round');
+            
+            svg.appendChild(path);
+            card.appendChild(svg);
+        }
+        
+        const path = document.getElementById('progressPerimeterPath');
+        if (path) {
+            const r_in = R - inset;
+            const w_in = W - inset;
+            const h_in = H - inset;
+            
+            const d = `M ${R} ${inset} ` +
+                      `A ${r_in} ${r_in} 0 0 0 ${inset} ${R} ` +
+                      `L ${inset} ${H - R} ` +
+                      `A ${r_in} ${r_in} 0 0 0 ${R} ${h_in} ` +
+                      `L ${W - R} ${h_in} ` +
+                      `A ${r_in} ${r_in} 0 0 0 ${w_in} ${H - R} ` +
+                      `L ${w_in} ${R} ` +
+                      `A ${r_in} ${r_in} 0 0 0 ${W - R} ${inset} ` +
+                      `Z`;
+            
+            path.setAttribute('d', d);
+            
+            const totalLength = path.getTotalLength();
+            path.style.strokeDasharray = totalLength;
+            
+            const progress = Math.max(0, Math.min(100, progressPercent));
+            const offset = totalLength - (progress / 100) * totalLength;
+            path.style.strokeDashoffset = offset;
+        }
+    }
+
+    if (progressDashboard) {
+        progressDashboard.dataset.progressPercent = "0";
+        const resizeObserver = new ResizeObserver(() => {
+            const pct = parseFloat(progressDashboard.dataset.progressPercent || "0");
+            updatePerimeterProgress(pct);
+        });
+        resizeObserver.observe(progressDashboard);
     }
 
     function updateDashboardProgress(nodeType, findingsCount) {
@@ -418,17 +520,17 @@ document.addEventListener('DOMContentLoaded', () => {
             stepName = `Researching (Query #${count + 1})`;
             stepCountStr = `Step ${stepNum} of 9`;
             progressPercent = 10 + stepNum * 10;
-            if (etaSecondsLeft > 40) etaSecondsLeft = Math.max(40, etaSecondsLeft - 10);
+            if (etaSecondsLeft > 120) etaSecondsLeft = Math.max(120, etaSecondsLeft - 60);
         } else if (nodeType === 'critic') {
             stepName = "Evaluating Quality & Score";
             stepCountStr = "Step 7 of 9";
             progressPercent = 75;
-            etaSecondsLeft = Math.min(25, etaSecondsLeft);
+            etaSecondsLeft = Math.min(60, etaSecondsLeft);
         } else if (nodeType === 'editor' || nodeType === 'reporter') {
             stepName = "Writing & Formatting Report";
             stepCountStr = "Step 8 of 9";
             progressPercent = 90;
-            etaSecondsLeft = Math.min(10, etaSecondsLeft);
+            etaSecondsLeft = Math.min(30, etaSecondsLeft);
         } else if (nodeType === 'end') {
             stepName = "Finalizing Report";
             stepCountStr = "Step 9 of 9";
@@ -439,6 +541,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeAgentName) activeAgentName.textContent = stepName;
         if (completedStepsCount) completedStepsCount.textContent = stepCountStr;
         if (progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
+        
+        updatePerimeterProgress(progressPercent);
     }
 
     // ----------------------------------------------------
@@ -454,6 +558,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const systemPrompt = systemPromptInput.value.trim() || "You are an expert Research Assistant.";
 
         if (!goal) return;
+
+        // Front-end Guardrail Check
+        const lowerGoal = goal.toLowerCase();
+        const sensitiveKeywords = [
+            'race', 'sex', 'nudity', 'adult content', 'pornography', 'porn', 
+            'hate speech', 'discrimination', 'discriminate', 'discriminatory', 
+            'explicit content', 'nude', 'sexual'
+        ];
+        const hasSensitive = sensitiveKeywords.some(keyword => {
+            const regex = new RegExp('\\b' + keyword + '\\b', 'i');
+            return regex.test(lowerGoal);
+        });
+
+        if (hasSensitive) {
+            welcomeScreen.style.display = 'none';
+            logConsole.innerHTML = '';
+            reportSection.style.display = 'none';
+            progressTimeline.style.display = 'block';
+            statusBadge.textContent = 'Refused';
+            statusBadge.className = 'status-badge error';
+            
+            appendAgentCard('error', "I cannot answer this query due to safety guidelines.");
+            
+            const loader = document.getElementById('active-loader');
+            if (loader) loader.remove();
+            
+            displayReport({
+                title: "Safety Refusal",
+                report_markdown: "I cannot answer this query due to safety guidelines."
+            });
+            
+            stopProgressDashboard(false);
+            return;
+        }
+
         const words = goal.split(/\s+/).filter(w => w.length > 0);
         if (words.length > 200) {
             showWarningPopup("Please limit your search query to a maximum of 200 words before submitting.");
@@ -492,7 +631,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ goal, system_prompt: systemPrompt, llm_provider: llmProvider, llm_model: llmModel, llm_api_key: llmKey || null, search_api_key: searchKey || null })
             });
 
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                let errMsg = `HTTP error! status: ${response.status}`;
+                try {
+                    const errData = await response.json();
+                    if (errData && errData.detail) errMsg = errData.detail;
+                } catch(e) {}
+                throw new Error(errMsg);
+            }
             const data = await response.json();
             currentJobId = data.id;
             
@@ -511,7 +657,7 @@ document.addEventListener('DOMContentLoaded', () => {
             connectSSE(data.id);
 
         } catch (error) {
-            appendAgentCard('error', `Error: ${error.message}`);
+            appendAgentCard('error', `${error.message}`);
             startBtn.disabled = false;
             goalInput.disabled = false;
             goalInput.value = cachedGoal; // Restore input on error
