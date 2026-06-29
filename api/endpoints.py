@@ -17,6 +17,10 @@ from google.auth.transport import requests as google_requests
 
 router = APIRouter()
 
+@router.get("/health")
+async def health_check():
+    return {"status": "ok", "app": "DeepSight Engine"}
+
 async def get_current_user_email(
     authorization: Optional[str] = Header(None),
     token: Optional[str] = None

@@ -7,7 +7,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = ROOT_DIR / ".env"
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Deep Research Agent"
+    PROJECT_NAME: str = "DeepSight Engine"
     DATABASE_URL: str = "sqlite+aiosqlite:///./research.db" # Defaulting to SQLite for easy V1 dev, can be overriden
     # If the user sets postgres: postgresql+asyncpg://user:pass@localhost:5432/db
     GOOGLE_CLIENT_ID: Optional[str] = None

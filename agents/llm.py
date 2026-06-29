@@ -59,7 +59,7 @@ def get_llm(provider: str, model: str, api_key: str | None) -> BaseChatModel:
             model=model,
             default_headers={
                 "HTTP-Referer": "http://localhost:8000",
-                "X-Title": "Deep Research Agent",
+                "X-Title": "DeepSight Engine",
                 "Authorization": f"Bearer {api_key}",
             },
         )
