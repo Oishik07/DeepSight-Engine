@@ -338,7 +338,7 @@ body.light-mode {
 }
 
 .hamburger-btn {
-    display: none;
+    display: flex;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -1100,3 +1100,215 @@ body.light-mode {
     width: 28px;
     border-radius: 6px;
 }
+
+/* Sidebar Collapse Styles for Desktop */
+@media (min-width: 769px) {
+    .sidebar {
+        transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sidebar.collapsed {
+        width: 0 !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+        border-right: none !important;
+    }
+}
+
+/* Close Sidebar Button Style */
+.close-sidebar-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.close-sidebar-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Progress Dashboard Styling */
+.progress-dashboard {
+    position: absolute;
+    top: 80px; /* just below top-nav */
+    right: 1.75rem;
+    width: 320px;
+    background: rgba(20, 20, 23, 0.8);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(56, 189, 248, 0.05);
+    z-index: 100;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.progress-dashboard.hidden {
+    display: none !important;
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+}
+
+.dashboard-header h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: -0.2px;
+}
+
+#dashboardTimer {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.825rem;
+    margin-bottom: 0.65rem;
+}
+
+.info-label {
+    color: var(--text-muted);
+}
+
+.info-value {
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #38bdf8 0%, #a78bfa 100%);
+    border-radius: 3px;
+    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Guardrail Popup CSS */
+.guardrail-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(8, 8, 10, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    transition: opacity 0.3s ease;
+}
+
+.guardrail-popup.hidden {
+    display: none !important;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.guardrail-popup-content {
+    background: rgba(20, 20, 23, 0.85);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 20px;
+    padding: 2.25rem 2rem;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.guardrail-popup-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.guardrail-popup-content h3 {
+    font-size: 1.25rem;
+    color: #ef4444;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.guardrail-popup-content p {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.guardrail-popup-btn {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    padding: 0.65rem 1.75rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    outline: none;
+}
+
+.guardrail-popup-btn:hover {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.6);
+    transform: translateY(-1px);
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+

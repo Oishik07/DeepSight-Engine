@@ -41,4 +41,5 @@ class AgentState(TypedDict):
     # Critic and Reflection fields
     critic_feedback: Optional[str]
     critic_decision: Optional[str]
+    critic_score: Optional[float]
     revision_count: int

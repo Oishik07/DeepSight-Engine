@@ -138,6 +138,7 @@ async def run_research_background(
         revision_count = 0
         critic_decision = None
         critic_feedback = None
+        critic_score = None
 
         async for event in app.astream(initial_state):
             for node_name, state_updates in event.items():
@@ -151,6 +152,8 @@ async def run_research_background(
                     critic_decision = state_updates["critic_decision"]
                 if "critic_feedback" in state_updates:
                     critic_feedback = state_updates["critic_feedback"]
+                if "critic_score" in state_updates:
+                    critic_score = state_updates["critic_score"]
 
                 if node_name == "planner":
                     plan = state_updates.get("research_plan")
@@ -164,12 +167,13 @@ async def run_research_background(
                 elif node_name == "reporter":
                     msg = "Generating initial report draft..."
                 elif node_name == "critic":
+                    score_str = f" [Quality Score: {critic_score}/10]" if critic_score is not None else ""
                     if critic_decision == "REVISE":
-                        msg = f"Critic requested REVISION: {critic_feedback}"
+                        msg = f"Critic requested REVISION{score_str}: {critic_feedback}"
                     elif critic_decision == "RESEARCH":
-                        msg = f"Critic requested MORE RESEARCH: {critic_feedback}"
+                        msg = f"Critic requested MORE RESEARCH{score_str}: {critic_feedback}"
                     else:
-                        msg = "Critic Approved Draft! 🎉"
+                        msg = f"Critic Approved Draft! 🎉{score_str}"
                 elif node_name == "editor":
                     msg = "Editor is refining the draft..."
                 else:
@@ -181,6 +185,7 @@ async def run_research_background(
                     "findings": accumulated_findings,
                     "critic_decision": critic_decision,
                     "critic_feedback": critic_feedback,
+                    "critic_score": critic_score,
                     "revision_count": revision_count
                 })
 

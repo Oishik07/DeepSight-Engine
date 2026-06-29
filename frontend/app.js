@@ -54,6 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let utterance = null;
     let isSpeaking = false;
 
+    // Translucent Popup Warning Guardrail
+    function showWarningPopup(message) {
+        let popup = document.getElementById('guardrailPopup');
+        if (!popup) {
+            popup = document.createElement('div');
+            popup.id = 'guardrailPopup';
+            popup.className = 'guardrail-popup hidden';
+            document.body.appendChild(popup);
+        }
+        popup.innerHTML = `
+            <div class="guardrail-popup-content">
+                <div class="guardrail-popup-icon">⚠️</div>
+                <h3>Word Limit Exceeded</h3>
+                <p>${message}</p>
+                <button id="closeGuardrailPopupBtn" class="guardrail-popup-btn">Got it</button>
+            </div>
+        `;
+        popup.classList.remove('hidden');
+        
+        document.getElementById('closeGuardrailPopupBtn').addEventListener('click', () => {
+            popup.classList.add('hidden');
+        });
+    }
+
     // Toggle System Prompt
     toggleSystemPromptBtn.addEventListener('click', () => {
         systemPromptPanel.classList.toggle('hidden');
@@ -140,10 +164,18 @@ document.addEventListener('DOMContentLoaded', () => {
         closeSidebarDrawer();
     });
 
-    // Auto-resize Textarea
+    // Auto-resize Textarea & Enforce 200 word count limit
     goalInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
+
+        const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
+        if (words.length > 200) {
+            showWarningPopup("Please limit your search query to a maximum of 200 words. Piling in long essays can hit context window limits.");
+            this.value = words.slice(0, 200).join(" ");
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        }
     });
 
     goalInput.addEventListener('keydown', (e) => {
@@ -274,18 +306,139 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(e);
         }
     }
+    // Sidebar Toggles & Collapsing
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    
+    // Check initial sidebar collapsed state on desktop
+    const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    if (sidebarCollapsed && window.innerWidth > 768) {
+        sidebar.classList.add('collapsed');
+    }
 
-    // Mobile drawer toggles
     sidebarToggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        drawerOverlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        if (window.innerWidth > 768) {
+            sidebar.classList.toggle('collapsed');
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        } else {
+            sidebar.classList.toggle('open');
+            drawerOverlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+        }
     });
+
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.add('collapsed');
+                localStorage.setItem('sidebarCollapsed', 'true');
+            } else {
+                closeSidebarDrawer();
+            }
+        });
+    }
 
     drawerOverlay.addEventListener('click', closeSidebarDrawer);
 
     function closeSidebarDrawer() {
         sidebar.classList.remove('open');
         drawerOverlay.style.display = 'none';
+    }
+
+    // Progress Dashboard controls
+    const progressDashboard = document.getElementById('progressDashboard');
+    const dashboardTimer = document.getElementById('dashboardTimer');
+    const activeAgentName = document.getElementById('activeAgentName');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const completedStepsCount = document.getElementById('completedStepsCount');
+    
+    let dashboardTimerInterval = null;
+    let etaSecondsLeft = 150; // default estimated time of 2.5 minutes
+
+    function startProgressDashboard() {
+        if (progressDashboard) {
+            progressDashboard.classList.remove('hidden');
+        }
+        etaSecondsLeft = 150;
+        updateDashboardTimerDisplay();
+        
+        if (dashboardTimerInterval) clearInterval(dashboardTimerInterval);
+        
+        dashboardTimerInterval = setInterval(() => {
+            if (etaSecondsLeft > 5) {
+                etaSecondsLeft--;
+                updateDashboardTimerDisplay();
+            }
+        }, 1000);
+        
+        updateDashboardProgress('planner', 0);
+    }
+
+    function stopProgressDashboard(isSuccess) {
+        if (dashboardTimerInterval) {
+            clearInterval(dashboardTimerInterval);
+            dashboardTimerInterval = null;
+        }
+        if (isSuccess) {
+            if (progressBarFill) progressBarFill.style.width = '100%';
+            if (completedStepsCount) completedStepsCount.textContent = 'Step 9 of 9';
+            if (activeAgentName) activeAgentName.textContent = 'Completed';
+            if (dashboardTimer) {
+                dashboardTimer.textContent = '00:00';
+                dashboardTimer.style.background = 'rgba(16, 185, 129, 0.1)';
+                dashboardTimer.style.color = '#10b981';
+            }
+            setTimeout(() => {
+                if (progressDashboard) progressDashboard.classList.add('hidden');
+            }, 3000);
+        } else {
+            if (progressDashboard) progressDashboard.classList.add('hidden');
+        }
+    }
+
+    function updateDashboardTimerDisplay() {
+        if (!dashboardTimer) return;
+        const mins = String(Math.floor(etaSecondsLeft / 60)).padStart(2, '0');
+        const secs = String(etaSecondsLeft % 60).padStart(2, '0');
+        dashboardTimer.textContent = `${mins}:${secs}`;
+    }
+
+    function updateDashboardProgress(nodeType, findingsCount) {
+        if (!progressDashboard) return;
+        
+        let stepName = "Planning";
+        let stepCountStr = "Step 1 of 9";
+        let progressPercent = 10;
+        
+        if (nodeType === 'planner') {
+            stepName = "Planning Task Breakdown";
+            stepCountStr = "Step 1 of 9";
+            progressPercent = 10;
+        } else if (nodeType === 'researcher') {
+            const count = findingsCount || 0;
+            const stepNum = Math.min(6, 2 + count);
+            stepName = `Researching (Query #${count + 1})`;
+            stepCountStr = `Step ${stepNum} of 9`;
+            progressPercent = 10 + stepNum * 10;
+            if (etaSecondsLeft > 40) etaSecondsLeft = Math.max(40, etaSecondsLeft - 10);
+        } else if (nodeType === 'critic') {
+            stepName = "Evaluating Quality & Score";
+            stepCountStr = "Step 7 of 9";
+            progressPercent = 75;
+            etaSecondsLeft = Math.min(25, etaSecondsLeft);
+        } else if (nodeType === 'editor' || nodeType === 'reporter') {
+            stepName = "Writing & Formatting Report";
+            stepCountStr = "Step 8 of 9";
+            progressPercent = 90;
+            etaSecondsLeft = Math.min(10, etaSecondsLeft);
+        } else if (nodeType === 'end') {
+            stepName = "Finalizing Report";
+            stepCountStr = "Step 9 of 9";
+            progressPercent = 100;
+            etaSecondsLeft = 0;
+        }
+        
+        if (activeAgentName) activeAgentName.textContent = stepName;
+        if (completedStepsCount) completedStepsCount.textContent = stepCountStr;
+        if (progressBarFill) progressBarFill.style.width = `${progressPercent}%`;
     }
 
     // ----------------------------------------------------
@@ -301,6 +454,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const systemPrompt = systemPromptInput.value.trim() || "You are an expert Research Assistant.";
 
         if (!goal) return;
+        const words = goal.split(/\s+/).filter(w => w.length > 0);
+        if (words.length > 200) {
+            showWarningPopup("Please limit your search query to a maximum of 200 words before submitting.");
+            return;
+        }
         cachedGoal = goal;
 
         // Auto-collapse settings
@@ -365,10 +523,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // EventSource does not support authorization headers natively. 
         // We append the authorization token as a query parameter!
         const eventSource = new EventSource(`/api/research/${jobId}/stream?token=${userToken}`);
+        
+        startProgressDashboard();
 
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             appendAgentCard(data.node, data.status, data.findings);
+            
+            updateDashboardProgress(data.node, data.findings ? data.findings.length : 0);
 
             if (data.node === 'end' || data.node === 'error') {
                 eventSource.close();
@@ -382,10 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.node === 'end') {
                     statusBadge.textContent = 'Completed';
                     statusBadge.className = 'status-badge success';
+                    stopProgressDashboard(true);
                     if (data.report) displayReport(data.report, jobId);
                 } else {
                     statusBadge.textContent = 'Failed';
                     statusBadge.className = 'status-badge error';
+                    stopProgressDashboard(false);
                     if (cachedGoal && goalInput.value === '') {
                         goalInput.value = cachedGoal;
                         goalInput.style.height = (goalInput.scrollHeight) + 'px';
@@ -398,6 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
             eventSource.close();
             startBtn.disabled = false;
             goalInput.disabled = false;
+            stopProgressDashboard(false);
             const loader = document.getElementById('active-loader');
             if (loader) loader.remove();
         };
@@ -456,8 +621,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         addLoader(nodeType);
         
-        // Auto scroll to bottom
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        // Auto scroll to bottom of chatContainer
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
     }
 
     function addLoader(nodeType) {
@@ -473,6 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
             logConsole.appendChild(loaderDiv);
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
         }
     }
 

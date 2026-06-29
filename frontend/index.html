@@ -15,10 +15,13 @@
     <div class="app-container" id="appContainer">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <button class="new-chat-btn" id="newChatBtn">
+            <div class="sidebar-header" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; width: 100%;">
+                <button class="new-chat-btn" id="newChatBtn" style="flex: 1;">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                     New Research
+                </button>
+                <button class="close-sidebar-btn" id="closeSidebarBtn" title="Close Sidebar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
             </div>
             <div class="history-list" id="historyList">
@@ -97,6 +100,27 @@
             <div id="systemPromptPanel" class="system-prompt-panel hidden">
                 <label>Custom System Prompt / Context</label>
                 <textarea id="systemPrompt" rows="3" placeholder="e.g. Act as a strict mutual fund compliance officer..."></textarea>
+            </div>
+
+            <!-- Progress Dashboard -->
+            <div id="progressDashboard" class="progress-dashboard hidden">
+                <div class="dashboard-header">
+                    <h4>Research Progress</h4>
+                    <span id="dashboardTimer">02:30</span>
+                </div>
+                <div class="dashboard-body">
+                    <div class="progress-info">
+                        <span class="info-label">Active Agent:</span>
+                        <span id="activeAgentName" class="info-value">Planning</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div id="progressBarFill" class="progress-bar-fill"></div>
+                    </div>
+                    <div class="progress-steps">
+                        <span id="completedStepsCount">Step 1 of 9</span>
+                        <span id="etaLabel">Est. remaining</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Chat / Content Area -->
