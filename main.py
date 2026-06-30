@@ -25,29 +25,34 @@ async def run_keep_alive():
         logger.info("RENDER_EXTERNAL_URL is not set. Skipping keep-alive heartbeats.")
         return
 
-    ping_url = f"{url.rstrip('/')}/api/health"
-    logger.info(f"Starting keep-alive heartbeats for Render at {ping_url}")
+    ping_urls = [
+        f"{deepsight_url.rstrip('/')}/api/health",          # DeepSight Engine
+        "https://starlims-aiengine.onrender.com/"           # StarLIMS AI Engine
+    ]
+    logger.info(f"Starting keep-alive heartbeats for Render at {ping_urls}")
     
     # Wait 10 seconds after startup before starting to ping
     await asyncio.sleep(10)
     
     while True:
-        try:
-            def ping():
-                req = urllib.request.Request(
-                    ping_url,
-                    headers={"User-Agent": "DeepSight-Engine-Heartbeat"}
-                )
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    return response.status
+        for ping_url in ping_urls:
+            try:
+                def ping():
+                    req = urllib.request.Request(
+                        ping_urls,
+                        headers={"User-Agent": "Render-KeepAlive Heartbeat"}
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as response:
+                        return response.status
+
+                status = await asyncio.to_thread(ping)
+                logger.info(f"Heartbeat to {ping_url}: {status}")
+
+            except Exception as e:
+                logger.error(f"Heartbeat failed for {ping_url}: {e}")
             
-            status = await asyncio.to_thread(ping)
-            logger.info(f"Keep-alive heartbeat status: {status}")
-        except Exception as e:
-            logger.error(f"Keep-alive heartbeat failed: {e}")
-            
-        # Sleep for 3 minutes (180 seconds)
-        await asyncio.sleep(180)
+        # Sleep for 5 minutes (300 seconds)
+        await asyncio.sleep(300)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
