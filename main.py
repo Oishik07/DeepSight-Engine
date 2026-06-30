@@ -26,7 +26,7 @@ async def run_keep_alive():
         return
 
     ping_urls = [
-        f"{deepsight_url.rstrip('/')}/api/health",          # DeepSight Engine
+        f"{url.rstrip('/')}/api/health",          # DeepSight Engine
         "https://starlims-aiengine.onrender.com/"           # StarLIMS AI Engine
     ]
     logger.info(f"Starting keep-alive heartbeats for Render at {ping_urls}")
@@ -39,7 +39,7 @@ async def run_keep_alive():
             try:
                 def ping():
                     req = urllib.request.Request(
-                        ping_urls,
+                        ping_url,
                         headers={"User-Agent": "Render-KeepAlive Heartbeat"}
                     )
                     with urllib.request.urlopen(req, timeout=10) as response:
