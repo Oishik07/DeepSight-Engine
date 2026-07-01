@@ -9,7 +9,7 @@
 > The architecture below illustrates the complete end-to-end workflow of DeepSight Engine.
 
 <p align="center">
-    <img src="docs/system-design.png" alt="DeepSight Engine Architecture" width="1000"/>
+    <img src="system-design.png" alt="DeepSight Engine Architecture" width="1000"/>
 </p>
 
 ---
