@@ -14,6 +14,42 @@
 
 ---
 
+
+---
+
+# 📸 Application Preview
+
+## 🏠 Home Screen
+
+<p align="center">
+  <img src="home.png" width="900">
+</p>
+
+---
+
+## 🔄 Research Progress
+
+Real-time streaming of agent execution using Server-Sent Events (SSE).
+
+<p align="center">
+  <img src="progress.png" width="900">
+</p>
+
+---
+
+## 📑 Generated Research Report
+
+Structured, citation-backed report generated after the multi-agent workflow completes.
+
+<p align="center">
+  <img src="report.png" width="900">
+</p>
+
+---
+
+
+
+
 ## ✨ Key Features
 
 - 🧠 Dynamic query decomposition using a dedicated **Planner Agent**
